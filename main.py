@@ -1,84 +1,96 @@
+from unicodedata import name
 import pygame
 
-pygame.init()
-screen_size = (400, 400)
-screen_color = (160, 160, 160)
-border_thickness = 1
-square_size = 40
-line_width = 6
-markers = []
-clicked = False
-pos = []
-player = 1
-FPS = 120
-BLACK = (0, 0, 0)
-RED = (255, 0, 0)
-pygame.display.set_caption("Tic Tac Toe")
-screen = pygame.display.set_mode(screen_size)
+from config import *
+from computer_player import *
+from draw import *
+from tkinter import *
 
-
-def draw_screen():
-    screen.fill(screen_color)
-    i = 0
-    while i < 1000:
-        pygame.draw.line(screen, (0, 0, 0), (i, 0),
-                         (i, 1000), border_thickness)
-        pygame.draw.line(screen, (0, 0, 0), (0, i),
-                         (1000, i), border_thickness)
-        i += square_size
-    return screen
-
-
-# def newBoard():
-for x in range(10):
-    row = [0] * 10
-    markers.append(row)
-
-
-def draw_markers():
-    x_pos = 0
-    for x in markers:
-        y_pos = 0
-        for y in x:
-            if y == 1:
-                pygame.draw.line(screen, BLACK, (x_pos * 40 + 15, y_pos *
-                                40 + 15), (x_pos * 40 + 25, y_pos * 40 + 25), line_width)
-                pygame.draw.line(screen, BLACK, (x_pos * 40 + 15, y_pos *
-                                40 + 25), (x_pos * 40 + 25, y_pos * 40 + 15), line_width)
-            if y == -1:
-                pygame.draw.circle(
-                    screen, RED, (x_pos * 40 + 20, y_pos * 40 + 20), 10, line_width)
-            y_pos += 1
-        x_pos += 1
-
-def main():
-    run = True
-    clicked = False
-    player = 1
-    clock = pygame.time.Clock()
+name = ''
+def win(screen, winner = "Player"):
     
-    while run:
-        screen = draw_screen()
-        draw_markers()
-        clock.tick(FPS)
-        for event in pygame.event.get():
+    if winner == "Player":
+        # Label(root, text = name + win_text2  , font=text_font).pack()
+        display_text(screen, win_text1 + name + win_text2  , (screen_size[0] // 2, screen_size[1] // 2))
+    else:
+        # Label(root, text = name + lose_text  , font=text_font).pack()
+        display_text(screen, name + lose_text , (screen_size[0] // 2, screen_size[1] // 2))
+    
+
+def check_if_end_game(screen, board):
+    if enemy_five_in_a_row(board, 1):
+        win(screen, "Player")
+        return 1
+    elif enemy_five_in_a_row(board, -1):
+        win(screen, "Computer")
+        return 1
+    return 0
+
+def window_game():
+    global name
+    name = username.get()
+    root.destroy()
+    
+    pygame.init()
+
+    screen = draw_screen()
+    
+
+    board = new_board()
+
+    pygame.display.update()
+
+    game_over = False
+
+    while True:
+        ev = pygame.event.get()
+        for event in ev:
             if event.type == pygame.QUIT:
-                run = False
-            if event.type == pygame.MOUSEBUTTONDOWN and clicked == False:
-                clicked = True
-            if event.type == pygame.MOUSEBUTTONUP and clicked == True:
-                clicked = False
+                pygame.quit()
+            elif event.type == pygame.MOUSEBUTTONUP:
+                if game_over:
+                    pygame.quit()
                 pos = pygame.mouse.get_pos()
-                cell_x = pos[0]
-                cell_y = pos[1]
-                if markers[cell_x // 40][cell_y // 40] == 0:
-                    markers[cell_x // 40][cell_y // 40] = player
-                    player *= -1
-        
-        pygame.display.update()
+                x = pos[0] // 40
+                y = pos[1] // 40
+                if board[x][y] != 0:
+                    continue
+                drawX(screen, x, y)
+                board[x][y] = 1
+                if check_if_end_game(screen, board):
+                    pygame.display.update()
+                    ev1 = pygame.event.get()
+                    game_over = True
+                    continue
 
-    pygame.quit()
+                pygame.display.update()
+                computer_reply(screen, board)
+                if check_if_end_game(screen, board):
+                    pygame.display.update()
+                    ev = pygame.event.get()
+                    game_over = True
+                    continue
+
+                pygame.display.update()
+                
 
 
-if __name__ == "__main__":
-    main()
+
+root = Tk()
+root.title("Caro")
+root.geometry("400x400")
+root.config(background= '#8ec8ed')
+
+def myClick():
+	lb = Label(root, text = "Hello world!")
+	lb.grid(row = 3, column = 0)
+
+Label(root, text = 'User Name').pack()
+
+username =  Entry(root, font = text_font, width = 15, background= 'white')
+username.pack()
+username.focus()
+
+button = Button(root, text = "Start", command = window_game).pack()
+
+root.mainloop()
